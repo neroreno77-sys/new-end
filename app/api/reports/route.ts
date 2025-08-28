@@ -4,29 +4,56 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[v0] === REPORT CREATION DEBUG START ===")
+    console.log("[v0] Environment check:")
+    console.log("[v0] - NODE_ENV:", process.env.NODE_ENV)
+    console.log("[v0] - Request URL:", request.url)
+    console.log("[v0] - Request headers:", Object.fromEntries(request.headers.entries()))
+
     const reportData = await request.json()
+    console.log("[v0] Report data received:", reportData)
     const { originalFiles, ...reportFields } = reportData
 
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    console.log("[v0] Cookie store created")
 
+    const supabase = createServerClient(cookieStore)
+    console.log("[v0] Supabase client created")
+
+    console.log("[v0] Attempting to get authenticated user...")
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser()
 
+    console.log("[v0] Auth result:")
+    console.log("[v0] - User:", user ? { id: user.id, email: user.email } : null)
+    console.log("[v0] - Auth error:", authError)
+
     if (authError || !user) {
-      console.error("[v0] Authentication error:", authError)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      console.error("[v0] Authentication failed - returning 401")
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+          details: authError?.message || "No user found",
+          debug: "Authentication failed in local environment",
+        },
+        { status: 401 },
+      )
     }
 
     console.log("[v0] Authenticated user ID:", user.id)
 
+    console.log("[v0] Fetching user profile...")
     let { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single()
+
+    console.log("[v0] Profile query result:")
+    console.log("[v0] - Profile:", profile)
+    console.log("[v0] - Profile error:", profileError)
 
     if (profileError || !profile) {
       console.log("[v0] Profile not found, creating new profile for user:", user.id)
@@ -42,9 +69,20 @@ export async function POST(request: NextRequest) {
         .select("role")
         .single()
 
+      console.log("[v0] Profile creation result:")
+      console.log("[v0] - New profile:", newProfile)
+      console.log("[v0] - Creation error:", createError)
+
       if (createError) {
         console.error("[v0] Error creating profile:", createError)
-        return NextResponse.json({ error: "User profile could not be created" }, { status: 403 })
+        return NextResponse.json(
+          {
+            error: "User profile could not be created",
+            details: createError.message,
+            debug: "Profile creation failed",
+          },
+          { status: 403 },
+        )
       }
 
       profile = newProfile
@@ -54,8 +92,21 @@ export async function POST(request: NextRequest) {
     console.log("[v0] User profile found with role:", profile.role)
 
     const allowedRoles = ["TU", "Admin", "Coordinator", "Koordinator"]
+    console.log("[v0] Checking role authorization...")
+    console.log("[v0] - User role:", profile.role)
+    console.log("[v0] - Allowed roles:", allowedRoles)
+    console.log("[v0] - Role allowed:", allowedRoles.includes(profile.role))
+
     if (!allowedRoles.includes(profile.role)) {
-      return NextResponse.json({ error: "Only TU, Admin, and Coordinator can create reports" }, { status: 403 })
+      console.error("[v0] Role authorization failed")
+      return NextResponse.json(
+        {
+          error: "Only TU, Admin, and Coordinator can create reports",
+          details: `Current role: ${profile.role}`,
+          debug: "Role authorization failed",
+        },
+        { status: 403 },
+      )
     }
 
     // Generate tracking number
@@ -86,12 +137,24 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
+    console.log("[v0] Report creation result:")
+    console.log("[v0] - Report:", report)
+    console.log("[v0] - Report error:", reportError)
+
     if (reportError) {
       console.error("[v0] Error creating report:", reportError)
-      return NextResponse.json({ error: "Failed to create report" }, { status: 500 })
+      return NextResponse.json(
+        {
+          error: "Failed to create report",
+          details: reportError.message,
+          debug: "Database insert failed",
+        },
+        { status: 500 },
+      )
     }
 
     console.log("[v0] Report created successfully:", report.id)
+    console.log("[v0] === REPORT CREATION DEBUG END ===")
 
     // Insert file attachments if any
     if (originalFiles && originalFiles.length > 0) {
@@ -140,7 +203,14 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("[v0] Error in report creation:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+        debug: "Unexpected error occurred",
+      },
+      { status: 500 },
+    )
   }
 }
 
