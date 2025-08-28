@@ -53,8 +53,9 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] User profile found with role:", profile.role)
 
-    if (profile.role !== "TU" && profile.role !== "Admin") {
-      return NextResponse.json({ error: "Only TU and Admin can create reports" }, { status: 403 })
+    const allowedRoles = ["TU", "Admin", "Coordinator", "Koordinator"]
+    if (!allowedRoles.includes(profile.role)) {
+      return NextResponse.json({ error: "Only TU, Admin, and Coordinator can create reports" }, { status: 403 })
     }
 
     // Generate tracking number

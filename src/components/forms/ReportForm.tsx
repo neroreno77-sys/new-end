@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, Upload, File, Trash2 } from "lucide-react"
+import { X, Upload, File, Trash2, User, LogOut } from "lucide-react"
 import { SERVICES } from "../../types"
 import type { FileAttachment } from "../../types"
 import { useApp } from "../../context/AppContext"
@@ -9,6 +9,12 @@ import { useApp } from "../../context/AppContext"
 export function ReportForm({ report, onSubmit, onCancel }) {
   const { state } = useApp()
   const currentUser = state.currentUser
+
+  const logout = () => {
+    // Simple logout - clear localStorage and reload
+    localStorage.removeItem("sitrack_app_state")
+    window.location.reload()
+  }
 
   const [formData, setFormData] = useState({
     layanan: report?.layanan || "",
@@ -31,6 +37,14 @@ export function ReportForm({ report, onSubmit, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (
+      !currentUser ||
+      (currentUser.role !== "TU" && currentUser.role !== "Admin" && currentUser.role !== "Coordinator")
+    ) {
+      alert("Hanya TU, Admin, dan Coordinator yang dapat membuat laporan baru")
+      return
+    }
 
     try {
       const response = await fetch("/api/reports", {
@@ -165,6 +179,32 @@ export function ReportForm({ report, onSubmit, onCancel }) {
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {currentUser && (
+          <div className="mx-6 mt-4 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <User className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-900">
+                    Sedang login sebagai: <span className="font-bold">{currentUser.name}</span>
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    Role: <span className="font-semibold">{currentUser.role}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex items-center gap-2 px-3 py-1 text-sm border border-blue-300 text-blue-700 hover:bg-blue-100 bg-transparent rounded-md transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

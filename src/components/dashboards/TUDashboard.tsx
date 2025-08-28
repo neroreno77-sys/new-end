@@ -344,6 +344,36 @@ export function TUDashboard() {
     setSearchQuery("")
   }
 
+  const handleWorkflowAction = async (reportId: string, transitionType: string, notes?: string) => {
+    try {
+      const response = await fetch("/api/workflow/transitions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reportId,
+          transitionType,
+          notes,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Update local state or refetch reports
+        alert(result.message)
+        // You might want to refresh the reports list here
+        window.location.reload()
+      } else {
+        alert(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error("Workflow action error:", error)
+      alert("Terjadi kesalahan saat memproses workflow")
+    }
+  }
+
   const { time, date } = formatDateTime(currentTime)
 
   return (
@@ -527,7 +557,7 @@ export function TUDashboard() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Judul Laporan
+                            NO SURAT
                           </th>
                           <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Layanan
@@ -556,7 +586,7 @@ export function TUDashboard() {
                         {filteredReports.map((report) => (
                           <tr key={report.id} className="hover:bg-gray-50">
                             <td className="px-3 sm:px-6 py-4 text-sm font-medium text-gray-900">
-                              <div className="max-w-32 sm:max-w-none truncate">{report.hal || report.noSurat}</div>
+                              <div className="max-w-32 sm:max-w-none truncate">{report.noSurat || report.hal}</div>
                             </td>
                             <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">
                               <div className="max-w-24 sm:max-w-xs truncate">{report.layanan}</div>

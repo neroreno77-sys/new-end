@@ -453,7 +453,6 @@ export function CoordinatorDashboard() {
                         <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">DIAJUKAN OLEH</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">TANGGAL</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">STATUS</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">PROGRESS</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-600 text-sm">AKSI</th>
                       </tr>
                     </thead>
@@ -477,17 +476,6 @@ export function CoordinatorDashboard() {
                             >
                               {getStatusText(report.status)}
                             </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${report.progress || 0}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-gray-600">{report.progress || 0}%</span>
-                            </div>
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-2">
@@ -520,7 +508,7 @@ export function CoordinatorDashboard() {
                       ))}
                       {filteredReports.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-gray-500">
+                          <td colSpan={6} className="py-8 text-center text-gray-500">
                             Tidak ada laporan yang sesuai dengan filter.
                           </td>
                         </tr>

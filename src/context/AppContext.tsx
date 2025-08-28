@@ -249,6 +249,8 @@ const AppContext = createContext<{
   requestRevision?: (reportId: string, staffName: string, revisionNotes: string) => void
 } | null>(null)
 
+export { AppContext }
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, loadInitialState())
 
